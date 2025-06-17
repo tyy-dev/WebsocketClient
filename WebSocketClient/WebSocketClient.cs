@@ -9,7 +9,6 @@ using System.Text;
 using WebSocketClient.Events;
 
 namespace WebSocketClient {
-
     /// <summary>
     /// Represents a WebSocket client that supports both standard WebSocket connections and Socket.IO protocol connections. 
     /// Usage:
@@ -101,10 +100,7 @@ namespace WebSocketClient {
             if (!isSocketIO)
                 throw new InvalidOperationException("Transport mode can only be set when using Socket.IO. Ensure 'isSocketIO' is true during initialization.");
 
-
-            // Ensure socketIOOptions exists and assign transport
-            if (socketIOOptions == null)
-                socketIOOptions = new() {
+            socketIOOptions ??= new() {
                     EIO = SocketIO.Core.EngineIO.V4,
                 };
 
@@ -139,9 +135,7 @@ namespace WebSocketClient {
         /// The <see cref="TransportProtocol"/> currently in use (e.g., <c>Polling</c> or <c>WebSocket</c>),
         /// or <c>null</c> if the client is not in Socket.IO mode or the Socket.IO client has not been initialized.
         /// </returns>
-        public TransportProtocol? GetActiveTransport() {
-            return this.socketIOClient?.Options.Transport;
-        }
+        public TransportProtocol? GetActiveTransport() => this.socketIOClient?.Options.Transport;
 
         /// <summary>
         /// Closes the WebSocket or Socket.IO connection gracefully.
@@ -156,7 +150,7 @@ namespace WebSocketClient {
                 description = closeDescription
             };
 
-            if (this.socketIOClient != null && this.socketIOClient.Connected) {
+            if (this.socketIOClient?.Connected == true) {
                 closeEvent.description ??= "io client disconnect";
 
                 await this.socketIOClient.DisconnectAsync();
@@ -219,8 +213,7 @@ namespace WebSocketClient {
          /// <returns>A <see cref="Task"/> representing the asynchronous send operation.</returns>
          /// <exception cref="ArgumentNullException">Thrown if <paramref name="webSocketEvent"/> is null.</exception>
         public async Task Emit(WebSocketEvent webSocketEvent) {
-            if (webSocketEvent == null)
-                throw new ArgumentNullException(nameof(webSocketEvent));
+            ArgumentNullException.ThrowIfNull(webSocketEvent);
 
             object?[] emitArgs = [webSocketEvent.eventId, .. webSocketEvent.GetEmitData()];
 
@@ -249,7 +242,7 @@ namespace WebSocketClient {
                 if (args.Length == 0)
                     await this.socketIOClient.EmitAsync(eventName);
                 else if (args.Length == 1)
-                    await this.socketIOClient.EmitAsync(eventName, args.First());
+                    await this.socketIOClient.EmitAsync(eventName, args[0]);
                 else
                     await this.socketIOClient.EmitAsync(eventName, args);
             }
