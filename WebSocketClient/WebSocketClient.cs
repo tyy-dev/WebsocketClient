@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SocketIOClient;
 using SocketIOClient.Transport;
@@ -52,8 +52,8 @@ namespace WebSocketClient {
         public async Task ConnectAsync() {
             #region Socket.IO
             if ((this.uri.AbsoluteUri.Contains("socket.io") || this.uri.AbsoluteUri.Contains("engine.io")) && !isSocketIO)
-                Console.WriteLine("Warning: The URL suggests a Socket.IO server, but 'isSocketIO' is set to false. " +
-                                         "You might want to enable Socket.IO mode to handle this connection properly.");
+                Console.WriteLine(@"Warning: The URL suggests a Socket.IO server, but 'isSocketIO' is set to false.
+                                         You might want to enable Socket.IO mode to handle this connection properly.");
 
             if (isSocketIO) {
                 SocketIOOptions socketIoOptions = socketIOOptions ?? new SocketIOOptions() {
@@ -74,7 +74,7 @@ namespace WebSocketClient {
 
                 this.socketIOClient.OnConnected += (_, _) => this.messageHandler?.HandleEvent(new WebSocketEventConnected());
                 this.socketIOClient.OnDisconnected += async (_, reason) => await this.CloseAsync(null, reason);
-                await this.socketIOClient.ConnectAsync();
+                await this.socketIOClient.ConnectAsync(cancellationToken: CancellationToken.None);
                 return;
             }
             #endregion
@@ -110,9 +110,8 @@ namespace WebSocketClient {
 
             socketIOOptions.Transport = transport;
 
-            if (reconnect && this.socketIOClient.Connected) {
-                await this.CloseAsync(WebSocketCloseStatus.NormalClosure, "Switching transport");
-                this.socketIOClient = null;
+            if (reconnect) {
+                if (socketIOClient?.Connected == true) await this.CloseAsync(WebSocketCloseStatus.NormalClosure, "Switching transport");
                 await this.ConnectAsync();
             }
         }
@@ -208,9 +207,8 @@ namespace WebSocketClient {
                 }
             }
             catch (Exception e) {
-                Console.WriteLine($"WebSocket receive error: {e.Message}");
+                Console.WriteLine($"WebSocket received error: {e.Message}");
             }
-
         }
 
          /// <summary>
@@ -237,7 +235,7 @@ namespace WebSocketClient {
         /// <param name="data">One or more objects representing the event name followed by its arguments.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous send operation.</returns>
         /// <exception cref="ArgumentException">Thrown if no event name is provided.</exception>
-        public async Task Emit(params object[] data) {
+        public async Task Emit(params object?[] data) {
             if (data == null || data.Length == 0)
                 throw new ArgumentException("Emit requires at least an event name.");
 
@@ -247,7 +245,7 @@ namespace WebSocketClient {
             }
             else {
                 string eventName = data[0]?.ToString() ?? throw new ArgumentException("Event name cannot be null.");
-                object[] args = [.. data.Skip(1)];
+                object?[] args = [.. data.Skip(1)];
                 if (args.Length == 0)
                     await this.socketIOClient.EmitAsync(eventName);
                 else if (args.Length == 1)
