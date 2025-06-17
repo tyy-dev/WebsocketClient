@@ -1,4 +1,4 @@
-﻿namespace WebSocketClient.Events {
+namespace WebSocketClient.Events {
 
     /// <summary>
     /// Manages registering to specific WebSocket events and invoking/dispatching events to matching handlers
@@ -28,7 +28,7 @@
 
                 // If ev is already a generic event with a meaningful innerEventEventId, use that instead
                 if (ev is WebSocketGenericEvent evt)
-                    eventId = evt.innerEventEventId;
+                    eventId = evt.innerEventEventId!;
 
                 WebSocketGenericEvent genericEvent = new() {
                     innerEventEventId = eventId,
